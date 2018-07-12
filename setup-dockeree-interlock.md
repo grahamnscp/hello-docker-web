@@ -30,7 +30,8 @@ docker node update --label-add nodetype=loadbalancer ucp-lb2.example.org
 ```
 Then reconfigure the interlock service to 'constrain' the proxies to the nodes labeled with the `nodetype=loadbalancer` label:
 
-Docs: https://docs.docker.com/ee/ucp/interlock/deploy/configure/  
+Interlock config docs:  
+https://docs.docker.com/ee/ucp/interlock/deploy/configure/  
 ```
 $ CURRENT_CONFIG_NAME=$(docker service inspect --format '{{ (index .Spec.TaskTemplate.ContainerSpec.Configs 0).ConfigName }}' ucp-interlock)
 
@@ -46,7 +47,7 @@ Modify the config file, config.toml to add the new ProxyConstraint:
 
 # save modified file
 ```
-Note, full config options reference doc:  
+Note: full config options reference doc:  
 https://docs.docker.com/ee/ucp/interlock/deploy/configuration-reference/
 
 Create a new Docker configuration object from the file you’ve edited:  
@@ -70,8 +71,8 @@ Check where proxy running:
 ```
 $ docker service ps ucp-interlock-proxy | egrep 'Running|ID'
 ID                  NAME                        IMAGE                              NODE                           DESIRED STATE       CURRENT STATE           ERROR                              PORTS
-75lrdrslzutt        ucp-interlock-proxy.1       docker/ucp-interlock-proxy:3.0.2   ucp-manager2.example.org       Running             Running 5 minutess ago
-uk1y5e0jpnj7        ucp-interlock-proxy.2       docker/ucp-interlock-proxy:3.0.2   ucp-manager1.example.org       Running             Running 18 minutess ago
+75lrdrslzutt        ucp-interlock-proxy.1       docker/ucp-interlock-proxy:3.0.2   ucp-lb2.example.org            Running             Running 5 minutess ago
+uk1y5e0jpnj7        ucp-interlock-proxy.2       docker/ucp-interlock-proxy:3.0.2   ucp-lb1.example.org            Running             Running 18 minutess ago
 ```
 Rollback if there is a config error and the service doesn't restart:  
 ```
