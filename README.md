@@ -88,13 +88,13 @@ m98e5zdd73md        ucp-interlock             replicated          1/1           
 kzkte92z6gn6        ucp-interlock-proxy       replicated          2/2                 docker/ucp-interlock-proxy:3.0.2       *:8080->80/tcp, *:8443->443/tcp
 
 
-$ docker network create -d overlay helloweb
+$ docker network create -d overlay helloweb-net
 
 $ docker service create \
   --name interlock-helloweb \
-  --network helloweb \
-  --label com.docker.lb.hosts=web.apps.example.org \
-  --label com.docker.lb.network=helloweb \
+  --network helloweb-net \
+  --label com.docker.lb.hosts=helloweb.apps.example.org \
+  --label com.docker.lb.network=helloweb-net \
   --label com.docker.lb.port=8080 \
   grahamh/hello-docker-web:3.0
 
@@ -115,4 +115,45 @@ ID           NAME                 IMAGE                        NODE
 qop5vxt7n4i0 interlock-helloweb.1 grahamh/hello-docker-web:3.0 ucp-worker1.example.org
    Running        Running 1 minute ago
 ```
+With Interlock 2.0 setup on Docker EE, with a load balancer pointing to the ucp-interlock-proxy worker nodes that has a wildcard DNS entry of `*.apps.example.org`:  
+(note port 8080 is used below as interlock is setup to listen on it, not that the app port is 8080 also)
 
+```
+$ curl helloweb.apps.example.org:8080
+
+                              ##
+                        ## ## ##        ==
+                     ## ## ## ## ##    ===
+                 /`````````````````\___/ ===
+            ~~~ {~~ ~~~~ ~~~ ~~~~ ~~~ ~~/~ === ~~~
+                 \______ o           __/
+                   \    \         __/
+                    \____\_______/
+ _           _    _                _            _
+| |     ___ | |  | |    ___     __| | ___   ___| | _____ _ __
+| |___ / _ \| |  | |   / _ \   / _  |/ _ \ / __| |/ / _ \ '__|
+|  _  |  __/| |__| |__| (_) | | (_| | (_) | (__|   <  __/ |
+|_| |_|\___/ \___|\___|\___/   \____|\___/ \___|_|\_\___|_|
+```
+
+With app uri context based routing, testing with /hello uri:
+```
+$ docker network create -d overlay hello-net
+
+$ docker service create \
+  --name interlock-hello \
+  --network hello-net \
+  --label com.docker.lb.hosts=hello.apps.example.org \
+  --label com.docker.lb.network=hello-net \
+  --label com.docker.lb.port=8080 \
+  --label com.docker.lb.context_root=/hello \
+  --label com.docker.lb.context_root_rewrite=true \
+  grahamh/hello-docker-web:3.0
+
+$ curl hello.apps.example.org:8080/hello/
+ _           _    _
+| |     ___ | |  | |    ___
+| |___ / _ \| |  | |   / _ \
+|  _  |  __/| |__| |__| (_) |
+|_| |_|\___/ \___|\___|\___/
+```
